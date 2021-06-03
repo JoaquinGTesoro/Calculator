@@ -30,6 +30,83 @@ function checkOperand(operand) {
     }
 }
 
+function addNumber(number) {
+    if (enteredNumber != null && enteredNumber.split("").length >= 9) {
+        return 1;
+    } else {
+        if (display.innerHTML == calculation[0]) {
+            display.innerHTML = "";
+            clearEverything();
+        }
+        if (operand != null) {
+            calculation.push(operand);
+            operand = null;
+        }
+        if (number == ".") {
+            if (decimalClicked == true) {
+                return 1;
+            } else {
+                decimalClicked = true;
+            }
+        }
+        display.innerHTML += number;
+        if (enteredNumber == null) {
+            enteredNumber = number
+        } else {
+            enteredNumber += number;
+        }
+    }   
+    console.log(enteredNumber);
+}
+
+function addOperator(operator) {
+    if (enteredNumber != null) calculation.push(parseFloat(enteredNumber));
+    enteredNumber = null;
+    decimalClicked = false;
+    if (operator == "%") {
+        calculation[0] = calculation[0] / 100;
+        display.innerHTML = calculation[0];
+        return 1;
+    }
+    if (operator == "√") {
+        calculation[0] = Math.sqrt(calculation[0]);
+        if (calculation[0] > 0) {
+            calculation[0] = round(calculation[0]);
+        } else {
+            calculation[0] = "Does not exist"
+        }
+        display.innerHTML = calculation[0];
+        return 1;
+    }
+    operand = operator;
+    display.innerHTML = "";
+}
+
+function makeCalc() {
+    if (enteredNumber != null) calculation.push(parseFloat(enteredNumber));
+    if(operand != null) calculation.push(operand);
+    enteredNumber = null;
+    operand = null;
+    decimalClicked = false;
+    let result;
+    if (calculation.length == 1) {
+        result = calculation[0]; 
+    } else if (calculation.length == 2) {
+        result = operate(calculation[0], calculation[0], checkOperand(calculation[1]));
+    } else if (calculation.length == 3) {
+        result = operate(calculation[0], calculation[2], checkOperand(calculation[1]));
+    } else if (calculation.length > 3){
+        while (calculation.length >= 3) {
+            result = operate(calculation[0], calculation[2], checkOperand(calculation[1]));
+            calculation[0] = result;
+            calculation.splice(1, 2);
+        }
+    }
+    display.innerHTML = round(result);
+    clearEverything();
+    calculation[0] = parseFloat(display.innerHTML);
+}
+
 function clearEverything() {
     enteredNumber = null;
     operand = null
@@ -54,71 +131,54 @@ let decimalClicked = false;
 let calculation = [];
 
 numbers.forEach(number => {
-    number.addEventListener('click', () => {
-        if (enteredNumber != null && enteredNumber.split("").length >= 9) {
-            return 1;
-        } else {
-            if (display.innerHTML == calculation[0]) {
-                display.innerHTML = "";
-                clearEverything();
-            }
-            if (operand != null) {
-                calculation.push(operand);
-                operand = null;
-            }
-            if (number.innerHTML == ".") {
-                if (decimalClicked == true) {
-                    return 1;
-                } else {
-                    decimalClicked = true;
-                }
-            }
-            display.innerHTML += number.innerHTML;
-            if (enteredNumber == null) {
-                enteredNumber = number.innerHTML
-            } else {
-                enteredNumber += number.innerHTML;
-            }
-        }   
-        console.log(enteredNumber);
-    })
+    number.addEventListener('click', function(){addNumber(number.innerHTML)})
 });
 
 operators.forEach(operator => {
-    operator.addEventListener('click', () => {
-        if (enteredNumber != null) calculation.push(parseFloat(enteredNumber));
-        enteredNumber = null;
-        decimalClicked = false;
-        operand = operator.innerHTML;
-        display.innerHTML = "";
-    })
+    operator.addEventListener('click', function(){addOperator(operator.innerHTML)})
 });
 
-equalBtn.addEventListener('click', () => {
-    if (enteredNumber != null) calculation.push(parseFloat(enteredNumber));
-    if(operand != null) calculation.push(operand);
-    enteredNumber = null;
-    operand = null;
-    decimalClicked = false;
-    let result;
-    if (calculation.length == 1) {
-        result = calculation[0]; 
-    } else if (calculation.length == 2) {
-        result = operate(calculation[0], calculation[0], checkOperand(calculation[1]));
-    } else if (calculation.length == 3) {
-        result = operate(calculation[0], calculation[2], checkOperand(calculation[1]));
-    } else if (calculation.length > 3){
-        while (calculation.length >= 3) {
-            result = operate(calculation[0], calculation[2], checkOperand(calculation[1]));
-            calculation[0] = result;
-            calculation.splice(1, 2);
-        }
-    }
-    display.innerHTML = round(result);
-    clearEverything();
-    calculation[0] = parseFloat(display.innerHTML);
-});
+equalBtn.addEventListener('click', function(){makeCalc()})
 
 clearBtn.addEventListener('click', () => {
     clearEverything();
+})
+
+//Keyboard Support 
+document.addEventListener('keypress', (event) => {
+    var name = event.key;
+    console.log(name);
+    if (isNaN(name) == false) {
+        addNumber(name);
+    } else {
+        switch (name) {
+            case "/":
+                event.preventDefault();
+                addOperator("/")
+                break;
+            case "*":
+                addOperator("*")
+                break;
+            case "-":
+                addOperator("-")
+                break;
+            case "+":
+                addOperator("+")
+                break;
+            case ".":
+                addNumber(".")
+                break;
+            case "Enter":
+                makeCalc()
+                break;
+            default:
+                break;
+        }
+    }
+})
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === "Escape") {
+        clearEverything();
+    }
 })
